@@ -25,7 +25,7 @@ class TelegramPluginTest(TestCase):
 
         responses.add('POST', url % (token))
         self.plugin.set_option('token', token, self.project)
-        self.plugin.set_option('chat_id')
+        self.plugin.set_option('chat_id', chat_id, self.project)
 
         group = self.create_group(message='Hello world', culprit='foo.bar')
         event = self.create_event(group=group, message='Hello world', tags={'level': 'warning'})
