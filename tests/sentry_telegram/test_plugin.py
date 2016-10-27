@@ -19,8 +19,13 @@ class TelegramPluginTest(TestCase):
 
     @responses.activate
     def test_simple_notification(self):
-        responses.add('POST', 'http://example.com/telegram')
-        self.plugin.set_option('webhook', 'http://example.com/telegram', self.project)
+        token = 'x' * 9 + ':' + 'x' * 35 # test bot token
+        chat_id = -100000000  # test id
+        url = 'https://api.telegram.org/bot%s/sendMessages'
+
+        responses.add('POST', url % (token))
+        self.plugin.set_option('token', token, self.project)
+        self.plugin.set_option('chat_id')
 
         group = self.create_group(message='Hello world', culprit='foo.bar')
         event = self.create_event(group=group, message='Hello world', tags={'level': 'warning'})
@@ -29,32 +34,10 @@ class TelegramPluginTest(TestCase):
 
         notification = Notification(event=event, rule=rule)
 
-        with self.options({'system.url-prefix': 'http://example.com'}):
+        with self.options({'system.url-prefix': 'https://api.telegram.org'}):
             self.plugin.notify(notification)
 
         request = responses.calls[0].request
         payload = json.loads(parse_qs(request.body)['payload'][0])
-        assert payload == {
-            'parse': 'none',
-            'username': 'Sentry',
-            'attachments': [
-                {
-                    'color': '#f18500',
-                    'fields': [
-                        {
-                            'short': False,
-                            'value': 'foo.bar',
-                            'title': 'Culprit',
-                        },
-                        {
-                            'short': True,
-                            'value': 'foo Bar',
-                            'title': 'Project'
-                        },
-                    ],
-                    'fallback': '[foo Bar] Hello world',
-                    'title': 'Hello world',
-                    'title_link': 'http://example.com/baz/bar/issues/1/',
-                },
-            ],
-        }
+        assert str(payload['chat_id']) == chat_id
+

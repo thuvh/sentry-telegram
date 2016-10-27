@@ -17,7 +17,6 @@ from django.db.models import Q
 from sentry import http
 from sentry.models import TagKey, TagValue
 from sentry.plugins.bases import notify
-from sentry.utils import json
 from sentry.utils.http import absolute_uri
 
 BOT_TELEGRAM_URL_TEMPLATE = 'https://api.telegram.org/bot{token}/sendMessage'
@@ -43,6 +42,7 @@ CONTENT_TEMPLATE = """
 
 {tags}
 """
+
 
 def validate_user_group_channel_id(id):
     return re.match('@[a-zA-Z0-9]{5,}', id) or re.match('-?[0-9]+', id)
@@ -207,11 +207,11 @@ class TelegramPlugin(notify.NotificationPlugin):
             tag_list = []
 
             for tag_key, tag_value in self._get_tags(event):
-                key = tag_key.lower()
-                std_key = TagKey.get_standardized_key(key)
-                if included_tags and key not in included_tags and std_key not in included_tags:
+                lower_key = tag_key.lower()
+                std_key = TagKey.get_standardized_key(lower_key)
+                if included_tags and lower_key not in included_tags and std_key not in included_tags:
                     continue
-                if excluded_tags and (key in excluded_tags or std_key in excluded_tags):
+                if excluded_tags and (lower_key in excluded_tags or std_key in excluded_tags):
                     continue
                 tag_list.append((tag_key.encode('utf-8'), tag_value.encode('utf-8')))
 
@@ -235,8 +235,8 @@ class TelegramPlugin(notify.NotificationPlugin):
         token = (self.get_option('token', project) or '').strip()
         webhook_url = BOT_TELEGRAM_URL_TEMPLATE.format(token=token)
 
-        bot_name = (self.get_option('bot_name', project) or 'Sentry').strip()
-        icon_url = self.get_option('icon_url', project)
+        # bot_name = (self.get_option('bot_name', project) or 'Sentry').strip()
+        # icon_url = self.get_option('icon_url', project)
         chat_id = (self.get_option('chat_id', project) or '').strip()
 
         alert = self._make_alert(notification)
