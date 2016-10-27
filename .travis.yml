@@ -13,6 +13,8 @@ cache:
 env:
   global:
   - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+before_script:
+  - psql -c 'create database sentry;' -U postgres
 before_install:
   - pip install codecov
 install:
